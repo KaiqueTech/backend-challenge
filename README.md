@@ -8,6 +8,8 @@ Este desafio é a porta de entrada para fazer parte desse time. Ele foi desenhad
 
 Não esperamos perfeição — esperamos raciocínio claro, código limpo e decisões justificadas. Mostre como você pensa e como você constrói.
 
+Status da implementação: a base financeira, de persistência, mensageria e observabilidade está implementada. A documentação de arquitetura foi centralizada em [ARCHITECTURE.md](./ARCHITECTURE.md). Os cenários que dependem de desligar containers durante a execução continuam condicionados ao ambiente Docker.
+
 ---
 
 ## 1. Visão geral
@@ -675,6 +677,8 @@ Obrigatório:
 - **métricas** cobrindo, no mínimo: transações por status, duplicatas detectadas, retries, mensagens em DLQ, conflitos de lock, outbox lag e latência de processamento;
 - **health checks** separados para liveness e readiness.
 
+O endpoint `GET /metrics` expõe métricas em formato Prometheus. São mantidos contadores de status, duplicatas, retries, mensagens elegíveis para DLQ, conflitos de lock e inconsistências de reconciliação, além do lag da outbox e resumo de latência. Os logs JSON não incluem payloads nem valores monetários; os identificadores disponíveis são propagados pelo contexto de requisição ou da mensagem.
+
 OpenTelemetry e dashboard são opcionais.
 
 ---
@@ -697,6 +701,8 @@ OpenTelemetry e dashboard são opcionais.
 - publishers concorrentes sobre a mesma outbox;
 - retry e DLQ;
 - recuperação após reinicialização.
+
+`bun run test:processes` inicia três workers Bun em processos do sistema, compartilhando o PostgreSQL real, para verificar concorrência entre instâncias. Os testes de desligamento de PostgreSQL/LocalStack não são executados automaticamente porque podem interromper o ambiente compartilhado; a indisponibilidade transitória é coberta por testes de resiliência e o procedimento manual está documentado em `docs/06-status-atual.md`.
 
 ### Concorrência (paralelismo real, não mocks sequenciais)
 
